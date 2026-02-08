@@ -1,200 +1,242 @@
 #!/usr/bin/env python3
 """
-Universal Unit Converter
-A comprehensive CLI tool for converting between various units
+Unit Converter - A versatile command-line unit conversion tool
+Supports: Length, Weight, Temperature, Volume, Time, and Data conversions
 """
 
 import sys
-from typing import Dict, Callable
+from typing import Dict, Tuple, Callable
 
-# Conversion functions
-def length_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between length units"""
-    to_meters = {
-        'mm': 0.001, 'cm': 0.01, 'm': 1, 'km': 1000,
-        'inch': 0.0254, 'foot': 0.3048, 'yard': 0.9144, 'mile': 1609.34
-    }
-    return value * to_meters[from_unit] / to_meters[to_unit]
-
-def weight_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between weight units"""
-    to_kg = {
-        'mg': 0.000001, 'g': 0.001, 'kg': 1, 'ton': 1000,
-        'oz': 0.0283495, 'lb': 0.453592, 'stone': 6.35029
-    }
-    return value * to_kg[from_unit] / to_kg[to_unit]
-
-def temperature_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between temperature units"""
-    # Convert to Celsius first
-    if from_unit == 'c':
-        celsius = value
-    elif from_unit == 'f':
-        celsius = (value - 32) * 5/9
-    elif from_unit == 'k':
-        celsius = value - 273.15
-    
-    # Convert from Celsius to target
-    if to_unit == 'c':
-        return celsius
-    elif to_unit == 'f':
-        return celsius * 9/5 + 32
-    elif to_unit == 'k':
-        return celsius + 273.15
-
-def volume_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between volume units"""
-    to_liters = {
-        'ml': 0.001, 'l': 1, 'gallon': 3.78541, 'quart': 0.946353,
-        'pint': 0.473176, 'cup': 0.236588, 'fl_oz': 0.0295735
-    }
-    return value * to_liters[from_unit] / to_liters[to_unit]
-
-def time_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between time units"""
-    to_seconds = {
-        'ms': 0.001, 's': 1, 'min': 60, 'hour': 3600,
-        'day': 86400, 'week': 604800, 'year': 31536000
-    }
-    return value * to_seconds[from_unit] / to_seconds[to_unit]
-
-def speed_converter(value: float, from_unit: str, to_unit: str) -> float:
-    """Convert between speed units"""
-    to_mps = {
-        'mps': 1, 'kph': 0.277778, 'mph': 0.44704, 'knot': 0.514444
-    }
-    return value * to_mps[from_unit] / to_mps[to_unit]
-
-# Category definitions
-CATEGORIES = {
-    'length': {
-        'name': 'Length',
-        'units': ['mm', 'cm', 'm', 'km', 'inch', 'foot', 'yard', 'mile'],
-        'converter': length_converter
+# Conversion factors (to base unit)
+CONVERSIONS = {
+    "length": {
+        "name": "Length",
+        "base": "meters",
+        "units": {
+            "meters": 1.0,
+            "kilometers": 1000.0,
+            "centimeters": 0.01,
+            "millimeters": 0.001,
+            "miles": 1609.344,
+            "yards": 0.9144,
+            "feet": 0.3048,
+            "inches": 0.0254,
+        }
     },
-    'weight': {
-        'name': 'Weight',
-        'units': ['mg', 'g', 'kg', 'ton', 'oz', 'lb', 'stone'],
-        'converter': weight_converter
+    "weight": {
+        "name": "Weight",
+        "base": "kilograms",
+        "units": {
+            "kilograms": 1.0,
+            "grams": 0.001,
+            "milligrams": 0.000001,
+            "pounds": 0.453592,
+            "ounces": 0.0283495,
+            "tons": 1000.0,
+        }
     },
-    'temperature': {
-        'name': 'Temperature',
-        'units': ['c', 'f', 'k'],
-        'converter': temperature_converter
+    "temperature": {
+        "name": "Temperature",
+        "special": True,  # Non-linear conversion
     },
-    'volume': {
-        'name': 'Volume',
-        'units': ['ml', 'l', 'gallon', 'quart', 'pint', 'cup', 'fl_oz'],
-        'converter': volume_converter
+    "volume": {
+        "name": "Volume",
+        "base": "liters",
+        "units": {
+            "liters": 1.0,
+            "milliliters": 0.001,
+            "gallons": 3.78541,
+            "quarts": 0.946353,
+            "pints": 0.473176,
+            "cups": 0.236588,
+            "fluid_ounces": 0.0295735,
+        }
     },
-    'time': {
-        'name': 'Time',
-        'units': ['ms', 's', 'min', 'hour', 'day', 'week', 'year'],
-        'converter': time_converter
+    "time": {
+        "name": "Time",
+        "base": "seconds",
+        "units": {
+            "seconds": 1.0,
+            "minutes": 60.0,
+            "hours": 3600.0,
+            "days": 86400.0,
+            "weeks": 604800.0,
+            "years": 31536000.0,
+        }
     },
-    'speed': {
-        'name': 'Speed',
-        'units': ['mps', 'kph', 'mph', 'knot'],
-        'converter': speed_converter
+    "data": {
+        "name": "Data",
+        "base": "bytes",
+        "units": {
+            "bytes": 1.0,
+            "kilobytes": 1024.0,
+            "megabytes": 1048576.0,
+            "gigabytes": 1073741824.0,
+            "terabytes": 1099511627776.0,
+        }
     }
 }
 
-def show_menu():
-    """Display the main menu"""
-    print("\n" + "="*50)
-    print("🔄 Universal Unit Converter")
-    print("="*50)
-    print("\nAvailable Categories:")
-    for idx, (key, cat) in enumerate(CATEGORIES.items(), 1):
-        print(f"  {idx}. {cat['name']}")
-    print("  0. Exit")
+def celsius_to_fahrenheit(c: float) -> float:
+    return (c * 9/5) + 32
+
+def fahrenheit_to_celsius(f: float) -> float:
+    return (f - 32) * 5/9
+
+def celsius_to_kelvin(c: float) -> float:
+    return c + 273.15
+
+def kelvin_to_celsius(k: float) -> float:
+    return k - 273.15
+
+def convert_temperature(value: float, from_unit: str, to_unit: str) -> float:
+    """Handle temperature conversions (non-linear)"""
+    from_unit = from_unit.lower()
+    to_unit = to_unit.lower()
+    
+    # Convert to Celsius first
+    if from_unit == "celsius":
+        celsius = value
+    elif from_unit == "fahrenheit":
+        celsius = fahrenheit_to_celsius(value)
+    elif from_unit == "kelvin":
+        celsius = kelvin_to_celsius(value)
+    else:
+        raise ValueError(f"Unknown temperature unit: {from_unit}")
+    
+    # Convert from Celsius to target
+    if to_unit == "celsius":
+        return celsius
+    elif to_unit == "fahrenheit":
+        return celsius_to_fahrenheit(celsius)
+    elif to_unit == "kelvin":
+        return celsius_to_kelvin(celsius)
+    else:
+        raise ValueError(f"Unknown temperature unit: {to_unit}")
+
+def convert(value: float, from_unit: str, to_unit: str, category: str) -> float:
+    """Convert a value from one unit to another within a category"""
+    cat_data = CONVERSIONS[category]
+    
+    # Special handling for temperature
+    if cat_data.get("special"):
+        return convert_temperature(value, from_unit, to_unit)
+    
+    # Linear conversions
+    units = cat_data["units"]
+    from_unit = from_unit.lower()
+    to_unit = to_unit.lower()
+    
+    if from_unit not in units:
+        raise ValueError(f"Unknown unit: {from_unit}")
+    if to_unit not in units:
+        raise ValueError(f"Unknown unit: {to_unit}")
+    
+    # Convert to base unit, then to target unit
+    base_value = value * units[from_unit]
+    result = base_value / units[to_unit]
+    
+    return result
+
+def list_categories():
+    """Display all available conversion categories"""
+    print("\n🔧 Available Conversion Categories:")
+    print("=" * 50)
+    for key, data in CONVERSIONS.items():
+        print(f"  • {data['name'].upper()} ({key})")
     print()
 
-def show_units(category: str):
-    """Display available units for a category"""
-    cat_data = CATEGORIES[category]
+def list_units(category: str):
+    """Display all units in a category"""
+    if category not in CONVERSIONS:
+        print(f"❌ Unknown category: {category}")
+        return
+    
+    cat_data = CONVERSIONS[category]
     print(f"\n📏 {cat_data['name']} Units:")
-    units = cat_data['units']
-    for i in range(0, len(units), 4):
-        row = units[i:i+4]
-        print("  " + "  |  ".join(f"{u:>10}" for u in row))
+    print("=" * 50)
+    
+    if category == "temperature":
+        print("  • Celsius")
+        print("  • Fahrenheit")
+        print("  • Kelvin")
+    else:
+        for unit in cat_data["units"].keys():
+            print(f"  • {unit.capitalize()}")
     print()
 
-def convert(category: str):
-    """Perform conversion for a category"""
-    cat_data = CATEGORIES[category]
-    show_units(category)
+def interactive_mode():
+    """Run the converter in interactive mode"""
+    print("\n" + "=" * 60)
+    print("🎯 UNIT CONVERTER - Interactive Mode")
+    print("=" * 60)
+    
+    list_categories()
+    
+    category = input("Select category (or 'quit' to exit): ").strip().lower()
+    
+    if category in ["quit", "exit", "q"]:
+        print("👋 Goodbye!")
+        return
+    
+    if category not in CONVERSIONS:
+        print(f"❌ Invalid category: {category}")
+        return interactive_mode()
+    
+    list_units(category)
     
     try:
-        value = float(input("Enter value to convert: "))
+        value = float(input("Enter value to convert: ").strip())
         from_unit = input("From unit: ").strip().lower()
         to_unit = input("To unit: ").strip().lower()
         
-        if from_unit not in cat_data['units'] or to_unit not in cat_data['units']:
-            print("❌ Invalid unit(s)!")
-            return
+        result = convert(value, from_unit, to_unit, category)
         
-        result = cat_data['converter'](value, from_unit, to_unit)
-        print(f"\n✅ Result: {value} {from_unit} = {result:.6f} {to_unit}")
+        print("\n" + "=" * 60)
+        print(f"✅ RESULT: {value} {from_unit} = {result:.6f} {to_unit}")
+        print("=" * 60 + "\n")
         
-    except ValueError:
-        print("❌ Invalid number!")
-    except KeyError:
-        print("❌ Unit not supported!")
-    except Exception as e:
+    except ValueError as e:
         print(f"❌ Error: {e}")
-
-def quick_convert(args):
-    """Quick conversion from command line arguments"""
-    if len(args) != 4:
-        print("Usage: converter.py <value> <from_unit> <to_unit> <category>")
-        print("Example: converter.py 100 km mile length")
-        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
     
-    value = float(args[0])
-    from_unit = args[1].lower()
-    to_unit = args[2].lower()
-    category = args[3].lower()
-    
-    if category not in CATEGORIES:
-        print(f"❌ Unknown category: {category}")
-        print(f"Available: {', '.join(CATEGORIES.keys())}")
-        sys.exit(1)
-    
-    cat_data = CATEGORIES[category]
-    result = cat_data['converter'](value, from_unit, to_unit)
-    print(f"{value} {from_unit} = {result:.6f} {to_unit}")
+    # Ask if they want to continue
+    again = input("Convert another? (y/n): ").strip().lower()
+    if again in ["y", "yes"]:
+        interactive_mode()
+    else:
+        print("👋 Goodbye!")
 
 def main():
-    """Main interactive loop"""
-    if len(sys.argv) > 1:
-        quick_convert(sys.argv[1:])
-        return
-    
-    while True:
-        show_menu()
+    """Main entry point"""
+    if len(sys.argv) == 1:
+        # Interactive mode
+        interactive_mode()
+    elif len(sys.argv) == 2 and sys.argv[1] in ["-h", "--help"]:
+        print(__doc__)
+        print("\nUsage:")
+        print("  Interactive mode: python converter.py")
+        print("  Direct mode:      python converter.py <value> <from_unit> <to_unit> <category>")
+        print("\nExample:")
+        print("  python converter.py 100 kilometers miles length")
+        print("  python converter.py 32 fahrenheit celsius temperature")
+    elif len(sys.argv) == 5:
+        # Direct mode
         try:
-            choice = input("Select category (0-6): ").strip()
+            value = float(sys.argv[1])
+            from_unit = sys.argv[2].lower()
+            to_unit = sys.argv[3].lower()
+            category = sys.argv[4].lower()
             
-            if choice == '0':
-                print("\n👋 Thanks for using Unit Converter!")
-                break
-            
-            try:
-                idx = int(choice) - 1
-                categories = list(CATEGORIES.keys())
-                if 0 <= idx < len(categories):
-                    convert(categories[idx])
-                else:
-                    print("❌ Invalid choice!")
-            except ValueError:
-                print("❌ Please enter a number!")
-                
-        except KeyboardInterrupt:
-            print("\n\n👋 Goodbye!")
-            break
-        except EOFError:
-            break
+            result = convert(value, from_unit, to_unit, category)
+            print(f"{value} {from_unit} = {result:.6f} {to_unit}")
+        except ValueError as e:
+            print(f"❌ Error: {e}")
+            sys.exit(1)
+    else:
+        print("❌ Invalid arguments. Use -h for help.")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
