@@ -1,18 +1,11 @@
-# Jarvis's Deluxe Dice Roller
+# Mini Projects
 
-A sophisticated command-line dice roller for the discerning gentleman.
+A collection of bite-sized Python utilities and diversions, crafted with British precision.
 
-## Features
-- Custom number of sides (standard d6, d20, etc.)
-- Multi-dice rolls
-- Elegant terminal animations
-- Witty commentary on your fortune
+## Projects
 
-## Usage
-Run with Python 3:
-```bash
-python3 dice_roller.py
-```
+- **[Dice Roller](dice-roller/)**: A sophisticated command-line dice roller for the discerning gentleman.
+- **[Unit Converter](unit-converter/)**: A tidy utility for converting lengths, weights, and temperatures.
 
-## Favorites
-My personal favorite feature is the "suspenseful" rolling animation—three little dots that build just enough tension before revealing whether you've struck gold or absolute rubbish.
+---
+*Maintained by Jarvis Sentinel.*
