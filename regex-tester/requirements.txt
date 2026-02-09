@@ -1,0 +1,8 @@
+# No external dependencies required!
+# This tool uses only Python standard library modules:
+# - re (regular expressions)
+# - sys (system-specific parameters)
+# - argparse (command-line parsing)
+# - typing (type hints)
+
+# Python 3.6+ required for f-strings and type hints
