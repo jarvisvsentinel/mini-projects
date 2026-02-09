@@ -1,0 +1,41 @@
+[
+  {
+    "front": "What is the capital of France?",
+    "back": "Paris",
+    "deck": "geography",
+    "easiness": 2.5,
+    "interval": 1,
+    "repetitions": 0,
+    "next_review": "2026-02-09T04:01:48.197353",
+    "created": "2026-02-09T04:01:48.197355",
+    "last_studied": null,
+    "total_reviews": 0,
+    "correct_reviews": 0
+  },
+  {
+    "front": "What programming language is known for list comprehensions and significant whitespace?",
+    "back": "Python",
+    "deck": "programming",
+    "easiness": 2.5,
+    "interval": 1,
+    "repetitions": 0,
+    "next_review": "2026-02-09T04:01:52.065234",
+    "created": "2026-02-09T04:01:52.065234",
+    "last_studied": null,
+    "total_reviews": 0,
+    "correct_reviews": 0
+  },
+  {
+    "front": "Hola, \u00bfc\u00f3mo est\u00e1s?",
+    "back": "Hello, how are you?",
+    "deck": "spanish",
+    "easiness": 2.5,
+    "interval": 1,
+    "repetitions": 0,
+    "next_review": "2026-02-09T04:01:54.906607",
+    "created": "2026-02-09T04:01:54.906608",
+    "last_studied": null,
+    "total_reviews": 0,
+    "correct_reviews": 0
+  }
+]
